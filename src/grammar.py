@@ -1,5 +1,7 @@
-from schema import FunctionDefenition, Parameter
+from dataclasses import dataclass
+from models import FunctionDefenition
 from enum import Enum, auto
+
 
 class State(Enum):
     START = auto()
@@ -15,21 +17,28 @@ class State(Enum):
     EXPECT_PARAMETERS_VALUE = auto()
     EXPECT_PARAMETERS_COMMA = auto()
     EXPECT_PARAMETERS_R_BRACE = auto()
-    EXPECT_NEXT_PARAMETERS_OR_END = auto()
     EXPECT_OBJECT_R_BRACE = auto()
     END = auto()
 
 
-class Grammar():
+@dataclass
+class Allowed():
+    literal: str | None = None
+    choices: set[str] | None = None
+    usable_funcs: set[str] | None = None
+    value_type: str | None = None
+
+class Grammar:
     def __init__(self, functions: dict[str, FunctionDefenition]):
-        self.functions: dict[str, FunctionDefenition] = functions
-        self.current_state: State = State.START
+        self.functions = functions
+        self.current_state = State.START
         self.current_function: str | None = None
         self.current_parameter: str | None = None
+        self.available_params: set[str] = set()
         self.generated_params: set[str] = set()
 
-    def get_allowed_tokens(self) -> str | set[str] | None:
-        check_basic_state: dict[State, str] = {
+    def get_allowed_tokens(self) -> Allowed:
+        basic = {
             State.START: "{",
             State.EXPECT_KEY: "name",
             State.EXPECT_COLON: ":",
@@ -37,50 +46,96 @@ class Grammar():
             State.EXPECT_PARAMETERS_KEY: "parameters",
             State.EXPECT_PARAMETERS_COLON: ":",
             State.EXPECT_PARAMETERS_L_BRACE: "{",
-            State.EXPECT_PARAMETERS_COMMA: ",",
             State.EXPECT_PARAMETERS_NAME_COLON: ":",
+            State.EXPECT_PARAMETERS_COMMA: ",",
             State.EXPECT_PARAMETERS_R_BRACE: "}",
-            State.EXPECT_OBJECT_R_BRACE: "}"
+            State.EXPECT_OBJECT_R_BRACE: "}",
+            State.END: None,
         }
 
-
-        if self.current_state in check_basic_state:
-            return check_basic_state[self.current_state]
+        if self.current_state in basic:
+            allowed_literal = Allowed(literal=basic[self.current_state])
+            return allowed_literal
 
         if self.current_state == State.EXPECT_FUNCTION_NAME:
-            return set(self.functions)
+            allowed_funcs = Allowed(usable_funcs=set(self.functions))
+            return allowed_funcs
 
         if self.current_state == State.EXPECT_PARAMETERS_NAME:
-            assert self.current_function is not None
-
-            param_name: set[str] = set(self.functions[self.current_function].parameters)
-            return param_name - self.generated_params
+            allowed_choices = Allowed(choices=(self.available_params - self.generated_params))
+            return allowed_choices
 
         if self.current_state == State.EXPECT_PARAMETERS_VALUE:
+            assert self.current_function is not None
             assert self.current_parameter is not None
-            assert self.current_function is not None
 
-            param_value = self.functions[self.current_function].parameters[self.current_parameter]
-            return param_value.type
+            allowed_type = Allowed(value_type=self.functions[self.current_function].parameters[self.current_parameter].type)
+            return allowed_type
 
-        if self.current_state == State.EXPECT_NEXT_PARAMETERS_OR_END:
-            assert self.current_function is not None
+        raise RuntimeError(f"Unhandled state {self.current_state}")
 
-            func_obj: FunctionDefenition = self.functions[self.current_function]
-            remaining = set(func_obj.parameters) - self.generated_params
+    def consume(self, token: str):
+        allowed = self.get_allowed_tokens()
+
+        if allowed.literal is not None:
+            assert token == allowed.literal
+
+        elif allowed.choices is not None:
+            assert token in allowed.choices
+
+        elif allowed.usable_funcs is not None:
+            assert token in allowed.usable_funcs
+
+        elif allowed.value_type is not None:
+            if allowed.value_type == "number":
+                # TODO: validate number
+                pass
+            elif allowed.value_type == "string":
+                # TODO: validate string
+                pass
+            else:
+                raise AssertionError(f"Unknown type {allowed.value_type}")
+
+        if self.current_state == State.EXPECT_FUNCTION_NAME:
+            self.current_function = token
+            self.available_params = set(
+                self.functions[token].parameters.keys()
+            )
+
+        elif self.current_state == State.EXPECT_PARAMETERS_NAME:
+            self.current_parameter = token
+            self.generated_params.add(token)
+
+        if self.current_state == State.EXPECT_PARAMETERS_VALUE:
+            remaining = self.available_params - self.generated_params
 
             if remaining:
-                return check_basic_state[State.EXPECT_PARAMETERS_COMMA]
+                self.current_state = State.EXPECT_PARAMETERS_COMMA
             else:
-                return check_basic_state[State.EXPECT_PARAMETERS_R_BRACE]
+                self.current_state = State.EXPECT_PARAMETERS_R_BRACE
+            return
 
-        if self.current_state == State.EXPECT_OBJECT_R_BRACE:
-            return check_basic_state[State.EXPECT_OBJECT_R_BRACE]
+        transitions = {
+            State.START: State.EXPECT_KEY,
+            State.EXPECT_KEY: State.EXPECT_COLON,
+            State.EXPECT_COLON: State.EXPECT_FUNCTION_NAME,
+            State.EXPECT_FUNCTION_NAME: State.EXPECT_KEY_COMMA,
+            State.EXPECT_KEY_COMMA: State.EXPECT_PARAMETERS_KEY,
+            State.EXPECT_PARAMETERS_KEY: State.EXPECT_PARAMETERS_COLON,
+            State.EXPECT_PARAMETERS_COLON: State.EXPECT_PARAMETERS_L_BRACE,
+            State.EXPECT_PARAMETERS_L_BRACE: State.EXPECT_PARAMETERS_NAME,
+            State.EXPECT_PARAMETERS_NAME: State.EXPECT_PARAMETERS_NAME_COLON,
+            State.EXPECT_PARAMETERS_NAME_COLON: State.EXPECT_PARAMETERS_VALUE,
+            State.EXPECT_PARAMETERS_COMMA: State.EXPECT_PARAMETERS_NAME,
+            State.EXPECT_PARAMETERS_R_BRACE: State.EXPECT_OBJECT_R_BRACE,
+            State.EXPECT_OBJECT_R_BRACE: State.END,
+        }
 
-        if self.current_state == State.END:
-            return None
-        raise RuntimeError(f"Unhandled state: {self.current_state}")
+        self.current_state = transitions[self.current_state]
 
-
-
-
+    def reset(self):
+        self.current_state = State.START
+        self.current_function = None
+        self.current_parameter = None
+        self.available_params.clear()
+        self.generated_params.clear()
