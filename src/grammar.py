@@ -1,25 +1,6 @@
 from dataclasses import dataclass
 from models import FunctionDefenition
-from enum import Enum, auto
-
-
-class State(Enum):
-    START = auto()
-    EXPECT_KEY = auto()
-    EXPECT_COLON = auto()
-    EXPECT_FUNCTION_NAME = auto()
-    EXPECT_KEY_COMMA = auto()
-    EXPECT_PARAMETERS_KEY = auto()
-    EXPECT_PARAMETERS_COLON = auto()
-    EXPECT_PARAMETERS_L_BRACE = auto()
-    EXPECT_PARAMETERS_NAME = auto()
-    EXPECT_PARAMETERS_NAME_COLON = auto()
-    EXPECT_PARAMETERS_VALUE = auto()
-    EXPECT_PARAMETERS_COMMA = auto()
-    EXPECT_PARAMETERS_R_BRACE = auto()
-    EXPECT_OBJECT_R_BRACE = auto()
-    END = auto()
-
+from utils import State
 
 @dataclass
 class Allowed():
@@ -27,6 +8,12 @@ class Allowed():
     choices: set[str] | None = None
     usable_funcs: set[str] | None = None
     value_type: str | None = None
+
+    def check_attributes(self, value: set | str) -> bool:
+        if isinstance(value, set):
+            return True
+
+
 
 class Grammar:
     def __init__(self, functions: dict[str, FunctionDefenition]):

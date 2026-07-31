@@ -1,17 +1,25 @@
+from grammar import Grammar
 from llm_sdk import Small_LLM_Model
 
 class Tokenizer:
-    def __init__(self, llm: Small_LLM_Model):
-        self.llm = llm
+    def __init__(self):
+        self.model = Small_LLM_Model()
 
-    def encode(self, text: str):
-        return self.llm.encode(text)
+    def encode(self, text):
+        return self.model.encode(text)
+
 
     def decode(self, ids):
-        return self.llm.decode(ids)
+        return self.model.decode(ids)
 
-    def vocab_path(self):
-        return self.llm.get_path_to_vocab_file()
+    def get_logits(self, ids):
+        return self.model.get_logits_from_input_ids(ids)
+
+    def vocab_file_path(self):
+        return self.model.get_path_to_vocab_file()
 
     def tokenizer_path(self):
-        return self.llm.get_path_to_tokenizer_file()
+        return self.model.get_path_to_tokenizer_file()
+
+    def vocab_size(self) -> int:
+        return self._tokenizer.vocab_size
