@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from models import FunctionDefenition
-from utils import State
+from src.models import FunctionDefenition
+from src.utils import State
 
 @dataclass
 class Allowed():
@@ -17,10 +17,10 @@ class Allowed():
             return [self.value_type]
 
         if self.choices is not None:
-            return self.choices
+            return list(self.choices)
 
         if self.usable_funcs is not None:
-            return self.usable_funcs
+            return list(self.usable_funcs)
 
         raise RuntimeError("Allowed is empty...")
 
