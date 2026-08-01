@@ -9,9 +9,20 @@ class Allowed():
     usable_funcs: set[str] | None = None
     value_type: str | None = None
 
-    def check_attributes(self, value: set | str) -> bool:
-        if isinstance(value, set):
-            return True
+    def check_value_type(self):
+        if self.literal is not None:
+            return [self.literal]
+
+        if self.value_type is not None:
+            return [self.value_type]
+
+        if self.choices is not None:
+            return self.choices
+
+        if self.usable_funcs is not None:
+            return self.usable_funcs
+
+        raise RuntimeError("Allowed is empty...")
 
 
 

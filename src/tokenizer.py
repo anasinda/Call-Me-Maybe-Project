@@ -6,7 +6,11 @@ class Tokenizer:
         self.model = Small_LLM_Model()
 
     def encode(self, text):
-        return self.model.encode(text)
+        ids = self.model.encode(text).squeeze().tolist()
+
+        if isinstance(ids, int):
+            return [ids]
+        return ids
 
 
     def decode(self, ids):
