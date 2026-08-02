@@ -38,10 +38,10 @@ class Grammar:
     def get_allowed_tokens(self) -> Allowed:
         basic = {
             State.START: "{",
-            State.EXPECT_KEY: "name",
+            State.EXPECT_KEY: "\"name\"",
             State.EXPECT_COLON: ":",
             State.EXPECT_KEY_COMMA: ",",
-            State.EXPECT_PARAMETERS_KEY: "parameters",
+            State.EXPECT_PARAMETERS_KEY: "\"parameters\"",
             State.EXPECT_PARAMETERS_COLON: ":",
             State.EXPECT_PARAMETERS_L_BRACE: "{",
             State.EXPECT_PARAMETERS_NAME_COLON: ":",
@@ -57,17 +57,19 @@ class Grammar:
 
         if self.current_state == State.EXPECT_FUNCTION_NAME:
             allowed_funcs = Allowed(usable_funcs=set(self.functions))
+            allowed_funcs.usable_funcs = {f'"{function}"' for function in self.functions}
             return allowed_funcs
 
         if self.current_state == State.EXPECT_PARAMETERS_NAME:
             allowed_choices = Allowed(choices=(self.available_params - self.generated_params))
+            allowed_choices.choices = {f'"{choice}"' for choice in allowed_choices.choices}
             return allowed_choices
 
         if self.current_state == State.EXPECT_PARAMETERS_VALUE:
             assert self.current_function is not None
             assert self.current_parameter is not None
 
-            allowed_type = Allowed(value_type=self.functions[self.current_function].parameters[self.current_parameter].type)
+            allowed_type = Allowed(value_type=self.functions[self.current_function].parameters[self.current_parameter.strip('"')].type)
             return allowed_type
 
         raise RuntimeError(f"Unhandled state {self.current_state}")
@@ -95,14 +97,14 @@ class Grammar:
                 raise AssertionError(f"Unknown type {allowed.value_type}")
 
         if self.current_state == State.EXPECT_FUNCTION_NAME:
-            self.current_function = token
+            self.current_function = token.strip('"')
             self.available_params = set(
-                self.functions[token].parameters.keys()
+                self.functions[self.current_function].parameters.keys()
             )
 
         elif self.current_state == State.EXPECT_PARAMETERS_NAME:
-            self.current_parameter = token
-            self.generated_params.add(token)
+            self.current_parameter = token.strip('"')
+            self.generated_params.add(self.current_parameter)
 
         if self.current_state == State.EXPECT_PARAMETERS_VALUE:
             remaining = self.available_params - self.generated_params
