@@ -5,7 +5,7 @@ from src.utils import State
 @dataclass
 class Allowed():
     literal: str | None = None
-    choices: set[str] | None = None
+    choices: list[str] | None = None
     usable_funcs: set[str] | None = None
     value_type: str | None = None
 
@@ -17,7 +17,7 @@ class Allowed():
             return [self.value_type]
 
         if self.choices is not None:
-            return list(self.choices)
+            return self.choices
 
         if self.usable_funcs is not None:
             return list(self.usable_funcs)
@@ -32,7 +32,7 @@ class Grammar:
         self.current_state = State.START
         self.current_function: str | None = None
         self.current_parameter: str | None = None
-        self.available_params: set[str] = set()
+        self.available_params: list[str] = []
         self.generated_params: set[str] = set()
 
     def get_allowed_tokens(self) -> Allowed:
@@ -61,9 +61,11 @@ class Grammar:
             return allowed_funcs
 
         if self.current_state == State.EXPECT_PARAMETERS_NAME:
-            allowed_choices = Allowed(choices=(self.available_params - self.generated_params))
-            allowed_choices.choices = {f'"{choice}"' for choice in allowed_choices.choices}
-            return allowed_choices
+            remaining_choices: list[str] = []
+
+            for param in self.available_params:
+                if param not in self.generated_params:
+                    return Allowed(choices=[f'"{param}"'])
 
         if self.current_state == State.EXPECT_PARAMETERS_VALUE:
             assert self.current_function is not None
@@ -98,7 +100,7 @@ class Grammar:
 
         if self.current_state == State.EXPECT_FUNCTION_NAME:
             self.current_function = token.strip('"')
-            self.available_params = set(
+            self.available_params = list(
                 self.functions[self.current_function].parameters.keys()
             )
 
@@ -107,9 +109,13 @@ class Grammar:
             self.generated_params.add(self.current_parameter)
 
         if self.current_state == State.EXPECT_PARAMETERS_VALUE:
-            remaining = self.available_params - self.generated_params
+            remaining_values: list[str] = []
 
-            if remaining:
+            for param in self.available_params:
+                if param not in self.generated_params:
+                    remaining_values.append(param)
+
+            if remaining_values:
                 self.current_state = State.EXPECT_PARAMETERS_COMMA
             else:
                 self.current_state = State.EXPECT_PARAMETERS_R_BRACE

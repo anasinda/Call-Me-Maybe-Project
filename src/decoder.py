@@ -25,7 +25,13 @@ class Decoder():
                     gen_num = self.generate_numbers(logits, mask, input_ids)
                     self.grammar.consume(gen_num)
                     continue
-            elif not remaining_candidates:
+
+                if allowed_tokens.value_type == "string":
+                    gen_string = self.generate_string(logits, mask, input_ids)
+                    self.grammar.consume(gen_string)
+                    continue
+
+            if not remaining_candidates:
                 allowed_tokens = self.grammar.get_allowed_tokens()
 
                 for token in allowed_tokens.check_value_type():
@@ -59,24 +65,49 @@ class Decoder():
 
     def generate_numbers(self, logits, mask, input_ids: list[int]):
         best_token_num: str = ""
-        generated_param: str = ""
-        possible_token: list[str] = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "-"]
+        generated_numbers: str = ""
+        possible_token: list[str] = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "-", ",", "}"]
+        stopping_tokens: list[str] = [",", "}"]
         possible_token_ids: list[int] = []
 
         for token in possible_token:
             possible_token_ids.append(self.tokenizer.encode(token))
 
         while True:
+            logits = np.array(self.tokenizer.get_logits(input_ids))
+            mask = np.full(len(logits), -np.inf)
             mask[possible_token_ids] = 0
             masked_num_logits = logits + mask
             best_token_num_id = np.argmax(masked_num_logits)
             best_token_num = self.tokenizer.decode(best_token_num_id)
             if best_token_num in possible_token:
-                input_ids.append(best_token_num_id)
-                generated_param += best_token_num
+                if best_token_num in stopping_tokens:
+                    break
+                else:
+                    input_ids.append(best_token_num_id)
+                    generated_numbers += best_token_num
+        return generated_numbers
+
+
+    def generate_string(self, logits, mask, input_ids: list[int]):
+        generated_string: str = ""
+        started: bool = False
+
+        while True:
+            logits = np.array(self.tokenizer.get_logits(input_ids))
+
+            best_token_str_id = np.argmax(logits)
+            best_token_str = self.tokenizer.decode(best_token_str_id)
+
+            input_ids.append(best_token_str_id)
+            generated_string += best_token_str
+
+            if best_token_str == '"':
+                if started:
+                    break
             else:
-                break
+                started = True
 
-
+        return generated_string
 
 

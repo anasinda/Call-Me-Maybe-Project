@@ -1,26 +1,3 @@
-# # from llm_sdk import Small_LLM_Model
-
-# # llm = Small_LLM_Model()
-# # print("This is add number", llm.encode("fn_add_numbers").squeeze().tolist())
-# # print("This is greet",llm.encode("fn_greet").squeeze().tolist())
-# # print("This is reverse str",llm.encode("fn_reverse_string").squeeze().tolist())
-# # print("This is square root",llm.encode("fn_get_square_root").squeeze().tolist())
-# # print("This is regex",llm.encode("fn_substitute_string_with_regex").squeeze().tolist())
-
-
-# arrays = [[41, 42, 43], [51, 52, 53], [61, 62, 63]]
-
-# for array in arrays:
-#     print(array[:0])
-
-# ex = {1, 2}
-# e = {3, 4}
-# exx = []
-
-# exx.append(ex)
-# exx.append(e)
-# print(exx
-
 from src.decoder import Decoder
 from src.tokenizer import Tokenizer
 from src.grammar import Grammar
@@ -52,7 +29,7 @@ fn_substitute_string_with_regex:
 Replace all occurrences matching a regex pattern in a string.
 
 User:
-What is the sum of 2 and 3?
+Greet john
 """.strip()
 
 input_ids, generated, remaining_candidates = decoder.initiliaze_decoder(prompt)
