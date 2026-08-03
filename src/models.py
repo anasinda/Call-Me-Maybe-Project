@@ -10,3 +10,6 @@ class FunctionDefenition(BaseModel):
     description: str
     parameters: dict[str, Parameter]
     returns: Parameter
+
+class PromptGetter(BaseModel):
+    prompt: str
