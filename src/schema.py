@@ -19,9 +19,9 @@ class Schema():
 
                 # print("Loaded json functions defs", self.parsed_json_definitions)
                 # print("Loaded json prompts tests", self.parsed_json_test_prompts)
-                # for data in self.parsed_json_definitions:
-                #     func_def_obj: FunctionDefenition = FunctionDefenition.model_validate(data)
-                #     self.llm_usable_functions[func_def_obj.name] = func_def_obj
+                for data in self.parsed_json_definitions:
+                    func_def_obj: FunctionDefenition = FunctionDefenition.model_validate(data)
+                    self.llm_usable_functions[func_def_obj.name] = func_def_obj
 
                 # for index, data in enumerate(self.parsed_json_test_prompts):
                 #     prompt_test_obj: PromptGetter = PromptGetter.model_validate(data)
@@ -29,4 +29,4 @@ class Schema():
         except FileNotFoundError as no_file_error:
             print(f"Couldn't open file: {no_file_error.filename}")
 
-        return self.parsed_json_definitions, self.parsed_json_test_prompts
+        return self.llm_usable_functions, self.parsed_json_test_prompts

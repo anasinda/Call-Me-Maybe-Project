@@ -12,27 +12,29 @@ class Generator():
         self.main_prompt: str = main_prompt
         self.input_ids: list[int] = []
         self.generated_result: list[int] = []
-        self.current_generated: list[int] = []
+        self.next_tokens: list[int] = []
+        self.remaining_tokens: list[int] = []
         self.ids_to_str: str = ""
 
     def start_model(self):
-        for index, prompt in enumerate(self.usable_prompts):
+        self.input_ids = self.tokenizer.encode(self.main_prompt)
+        logits = np.array(self.tokenizer.get_logits(self.input_ids))
+        mask = np.full(len(logits), -np.inf)
+        end: int = 0
 
-            for  _ in range(3):
-                prompt_value = next(iter(prompt.values()))
-                # print(f"Prompt-{index} name:", prompt_value)
-                self.input_ids = self.tokenizer.encode(self.main_prompt + prompt_value)
-                prompt_logit = self.tokenizer.encode(prompt_value)
-                prompt_logit_str = self.tokenizer.decode(prompt_logit)
-                # print("input ids", self.input_ids)
-                # print("prompt ids", prompt_logit)
-                # print("prompt str", prompt_logit_str)
-                logits = np.array(self.tokenizer.get_logits(self.input_ids))
-                best_logit = np.argmax(logits)
-                self.input_ids.append(best_logit)
-                self.generated_result.append(best_logit)
-                self.ids_to_str += self.tokenizer.decode(self.generated_result)
-                print("ud_str", self.ids_to_str)
-                # print(f"These are generated id's:", self.generated_result)
-                # print(f"This is generated string", self.tokenizer.decode(self.generated_result))
+        while True:
+            for token in self.input_ids:
+                if end < len(token):
+                    mask[token[end]] = 0
+                else:
+                    break
+            end += 1
+            best_token = np.argmax(logits)
+            self.next_tokens.append(best_token)
+            for token in self.input_ids:
+                if self.next_tokens in token:
+                    self.remaining_tokens.append(token)
+
+
+
 
