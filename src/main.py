@@ -17,10 +17,10 @@ def main():
         prompt_creator = CreatePrompt(use_given_functions)
         main_prompt = prompt_creator.create_main_prompt()
         print(main_prompt)
-        user_prompt = "What is the sum of 2 and 3?"
+        user_prompt = "Substitute the word 'cat' with 'dog' in 'The cat sat on the mat with another cat'"
         generator = Generator(use_given_functions, use_given_prompts, (main_prompt + user_prompt))
         generator.start_model()
-        
+
 if __name__ == "__main__":
     main()
 
