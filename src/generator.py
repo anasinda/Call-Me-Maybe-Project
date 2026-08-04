@@ -1,5 +1,6 @@
 from tokenizer import Tokenizer
 import numpy as np
+from models import FunctionDefenition
 from typing import Any
 
 
@@ -7,34 +8,42 @@ from typing import Any
 class Generator():
     def __init__(self, usable_funcs: list[str], usable_prompts: list[str], main_prompt: str):
         self.tokenizer: Tokenizer = Tokenizer()
-        self.usable_funcs: list[dict[str, Any]] = usable_funcs
+        self.usable_funcs: dict[str, FunctionDefenition] = usable_funcs
         self.usable_prompts: list[dict[str, str]] = usable_prompts
         self.main_prompt: str = main_prompt
         self.input_ids: list[int] = []
         self.generated_result: list[int] = []
         self.next_tokens: list[int] = []
+        self.function_tokens: list[list[int]] = []
         self.remaining_tokens: list[int] = []
         self.ids_to_str: str = ""
 
     def start_model(self):
+        index: int = 0
         self.input_ids = self.tokenizer.encode(self.main_prompt)
-        logits = np.array(self.tokenizer.get_logits(self.input_ids))
-        mask = np.full(len(logits), -np.inf)
-        end: int = 0
-
         while True:
-            for token in self.input_ids:
-                if end < len(token):
-                    mask[token[end]] = 0
-                else:
-                    break
-            end += 1
-            best_token = np.argmax(logits)
+            if len(self.function_tokens) == 1:
+                break
+            logits = np.array(self.tokenizer.get_logits(self.input_ids))
+            mask = np.full(len(logits), -np.inf)
+            if not self.function_tokens:
+                function_names: list[str] = list(self.usable_funcs.keys())
+                for function in function_names:
+                    self.function_tokens.append(self.tokenizer.encode(function))
+
+            for function_token in self.function_tokens:
+                if index < len(function_token):
+                    mask[function_token[index]] = 0
+
+            best_token = np.argmax(mask)
+            self.input_ids.append(best_token)
             self.next_tokens.append(best_token)
-            for token in self.input_ids:
-                if self.next_tokens in token:
-                    self.remaining_tokens.append(token)
+            for match_token in self.function_tokens:
+                if match_token[:len(self.next_tokens)] == self.next_tokens:
+                    self.remaining_tokens.append(match_token)
+            self.function_tokens = self.remaining_tokens
+            self.remaining_tokens.clear()
+            index += 1
 
-
-
-
+        result = self.tokenizer.decode(self.next_tokens)
+        print("This is result", result)
