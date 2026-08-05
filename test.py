@@ -1,4 +1,4 @@
-from src.decoder import Decoder
+from src.parameter_constraint_decoder import Decoder
 from src.tokenizer import Tokenizer
 from src.grammar import Grammar
 from src.schema import Schema

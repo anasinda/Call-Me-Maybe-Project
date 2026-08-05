@@ -32,7 +32,8 @@ class ParameterDecoder():
                 parameters_names: list[str] = list(function_obj.parameters.keys())
                 for parameter in parameters_names:
                     if function_obj.parameters[parameter] == "number":
-                        self.parameters_tokens = self.generate_numbers(parameters_prompt)
+                        possible_parameter_token = self.tokenizer.encode(parameter)
+                        self.parameters_tokens = self.generate_numbers(parameters_prompt, possible_parameter_token)
                     self.function_tokens.append(self.tokenizer.encode(function))
 
             for function_token in self.function_tokens:
@@ -61,10 +62,47 @@ class ParameterDecoder():
         print(f"This is prompt: {user_prompt}, this is result {result}")
         return result
 
-    def generate_numbers(self, parameters_prompt: str):
+    def generate_numbers(self, parameters_prompt: str, possible_parameter_tokens):
         allowed_prompt_token: str = "List of tokens to choose from:\n"
-        allowed_prompt_token: str = "Stop generating at these tokens:\n"
+        stop_prompt_token: str = "Stop generating at these tokens:\n"
 
-        for token in self.possible_num_tokens:
-            edit_prompt += edit_prompt + f"token\n"
+        parameters_prompt += allowed_prompt_token
+        for allowed_token in self.possible_num_tokens:
+            parameters_prompt += f"{allowed_token}\n"
 
+        parameters_prompt += stop_prompt_token
+        for stop_token in stop_prompt_token:
+            parameters_prompt += f"{stop_token}\n"
+
+        self.input_ids = self.tokenizer.encode(parameters_prompt)
+        logits = np.array(self.tokenizer.get_logits(self.input_ids))
+        mask = np.full(len(logits), -np.inf)
+
+        index = 0
+        while index <:
+            for parameter_token in possible_parameter_tokens:
+                    mask[parameter_token] = 0
+
+            masked_logits = logits + mask
+            best_token = np.argmax(masked_logits)
+            self.input_ids.append(best_token)
+            self.next_tokens.append(best_token)
+
+            for match_token in self.parameters_tokens:
+
+        #     for match_token in self.parameters_tokens:
+        #         if match_token[:len(self.next_tokens)] == self.next_tokens:
+        #             self.remaining_tokens.append(match_token)
+        #     if not self.remaining_tokens:
+        #         raise RuntimeError("No function matches generated prefix...")
+
+        #     self.parameters_tokens = self.remaining_tokens.copy()
+        #     self.remaining_tokens.clear()
+        #     index += 1
+
+        # result = self.tokenizer.decode(self.next_tokens)
+        # self.next_tokens.clear()
+        # self.parameters_tokens.clear()
+        # self.input_ids.clear()
+        # print(f"This is parameter result {result}")
+        # return result
