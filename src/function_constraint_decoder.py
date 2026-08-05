@@ -6,8 +6,8 @@ from typing import Any
 
 
 class Generator():
-    def __init__(self, usable_funcs: list[str], usable_prompts: list[str]):
-        self.tokenizer: Tokenizer = Tokenizer()
+    def __init__(self, tokenizer: Tokenizer, usable_funcs: list[str], usable_prompts: list[str]):
+        self.tokenizer: Tokenizer = tokenizer
         self.usable_funcs: dict[str, FunctionDefenition] = usable_funcs
         self.usable_prompts: list[dict[str, str]] = usable_prompts
         self.input_ids: list[int] = []
@@ -53,8 +53,10 @@ class Generator():
             index += 1
 
         result = self.tokenizer.decode(self.next_tokens)
+        selected_input_ids = self.input_ids.copy()
+
         self.next_tokens.clear()
         self.function_tokens.clear()
         self.input_ids.clear()
         print(f"This is prompt: {user_prompt}, this is result {result}")
-        return result
+        return result, selected_input_ids

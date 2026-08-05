@@ -30,48 +30,61 @@ Rules:
 - The function name MUST be one of the available functions.
 - Choose the function whose description best matches the user's request.
 """
+
         self.parameters_prompt: str = """
-You are extracting arguments for ONE function.
-You already found the correct function
-It is 100% the right function for the USER PROMPT
+You are extracting parameters for an already selected function.
+
+The function has already been chosen correctly.
+Your ONLY job is to extract the parameter values.
 
 Rules:
-- Only produce the value(s) for the parameters.
-- Do not choose another function.
-- Use information from the user's request only.
-- If a parameter is a number, output only the number or numbers.
-- If a parameter is a string, output only the string exactly as requested.
+- Output ONLY the parameter values.
+- Do not output JSON.
+- Do not output the function name.
+- Do not explain your reasoning.
+- Do not invent values.
+- If the value appears in the user's prompt, copy it exactly.
+- If there are multiple parameters, output them in the same order they are listed.
+- If a parameter is a number, output only the numeric value.
+- If a parameter is a string, output only the string exactly as it appears in the user's prompt.
+
 
 
 """
-        self.main_prompt_temp = self.main_prompt
 
 
     def create_main_prompt(self):
         full_prompt = self.main_prompt
-        full_parameters_prompt = self.parameters_prompt
         for func, func_obj in self.use_given_functions.items():
-            full_prompt += f"\nFunction name: {func}"
-            full_parameters_prompt += f"\nFunction name: {func}"
-            full_prompt += f"\nDescription for {func}: {func_obj.description}\n"
-            full_parameters_prompt += f"\nDescription for {func}: {func_obj.description}\n"
+            full_prompt += f"\nFunction name:\n{func}\n"
+            full_prompt += f"\nDescription for {func}:\n{func_obj.description}\n"
             full_prompt += f"\nParameters:\n"
-            full_parameters_prompt += f"\nParameters:\n"
             for param, param_value in func_obj.parameters.items():
                 full_prompt += f"- {param} : {param_value}\n"
-                full_parameters_prompt += f"- {param} : {param_value}\n"
-                full_prompt += f"\nExample:\n"
-                full_prompt += f"{self.function_examples[func]}\n"
-                full_prompt += f"\nResponse:"
-                full_prompt += f"\n{func}\n"
-                full_prompt += f"\nUse case:"
-                full_prompt += f"\n{self.functions_example_select[func]}\n"
-                full_prompt += "\n----------------\n"
+            full_prompt += f"\nExample:\n"
+            full_prompt += f"{self.function_examples[func]}\n"
+            full_prompt += f"\nResponse:"
+            full_prompt += f"\n{func}\n"
+            full_prompt += f"\nUse case:"
+            full_prompt += f"\n{self.functions_example_select[func]}\n"
+            full_prompt += "\n----------------\n"
 
         full_prompt += "\nUSER PROMPT:"
-        full_parameters_prompt += "\nUSER PROMPT:"
-        return full_prompt, f
+        return full_prompt
 
-    # def create_parameters_prompt(self):
-    #     full_parameters_prompt = self.parameters_prompt
-    #     for
+    def create_parameters_prompt(self, function_name: str, user_prompt: str):
+        selected_func_obj = self.use_given_functions[function_name]
+        full_parameters_prompt = self.parameters_prompt
+        full_parameters_prompt += f"\nFunction name:\n{selected_func_obj.name}\n"
+        full_parameters_prompt += f"\nDescription for {selected_func_obj.name}:\n{selected_func_obj.description}\n"
+        # full_parameters_prompt += f"\nUsage: {self.function_examples[selected_func_obj.name]}\n"
+        full_parameters_prompt += f"\nParameters:\n"
+        for key, value in selected_func_obj.parameters.items():
+            full_parameters_prompt += f"- {key} : {value.type}\n"
+
+        full_parameters_prompt += "\nUSER PROMPT:\n"
+        full_parameters_prompt += f"{user_prompt}\n"
+        full_parameters_prompt += f"\nOutput:\n"
+        return full_parameters_prompt
+
+
