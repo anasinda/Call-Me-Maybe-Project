@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from src.models import FunctionDefenition
-from src.utils import State
+from src.base_prompt import State
 
 @dataclass
 class Allowed():

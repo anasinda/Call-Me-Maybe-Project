@@ -1,8 +1,9 @@
 from schema import Schema
-from generator import Generator
-from utils import CreatePrompt
+from function_constraint_decoder import Generator
+from base_prompt import CreatePrompt
 from models import FunctionDefenition
 from typing import Any
+# from parameter_constraint_decoder import ParameterDecoder
 
 def main():
 
@@ -15,11 +16,16 @@ def main():
 
     if use_given_prompts:
         prompt_creator = CreatePrompt(use_given_functions)
+        generator = Generator(use_given_functions, use_given_prompts)
+        # parameter_decoder = ParameterDecoder()
         main_prompt = prompt_creator.create_main_prompt()
         print(main_prompt)
-        user_prompt = "Substitute the word 'cat' with 'dog' in 'The cat sat on the mat with another cat'"
-        generator = Generator(use_given_functions, use_given_prompts, (main_prompt + user_prompt))
-        generator.start_model()
+
+        for prompt in use_given_prompts:
+            # main_prompt , parameters_prompt = prompt_creator.create_main_prompt()
+            value = next(iter(prompt.values())) + '\n'
+            generated_function = generator.start_model(main_prompt + value, value)
+            # parameter_decoder.generate_parameters(parameters_prompt, generated_function, use_given_functions[generated_function])
 
 if __name__ == "__main__":
     main()

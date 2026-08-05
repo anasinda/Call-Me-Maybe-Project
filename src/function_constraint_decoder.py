@@ -6,21 +6,18 @@ from typing import Any
 
 
 class Generator():
-    def __init__(self, usable_funcs: list[str], usable_prompts: list[str], main_prompt: str):
+    def __init__(self, usable_funcs: list[str], usable_prompts: list[str]):
         self.tokenizer: Tokenizer = Tokenizer()
         self.usable_funcs: dict[str, FunctionDefenition] = usable_funcs
         self.usable_prompts: list[dict[str, str]] = usable_prompts
-        self.main_prompt: str = main_prompt
         self.input_ids: list[int] = []
-        self.generated_result: list[int] = []
         self.next_tokens: list[int] = []
         self.function_tokens: list[list[int]] = []
         self.remaining_tokens: list[list[int]] = []
-        self.ids_to_str: str = ""
 
-    def start_model(self):
+    def start_model(self, main_prompt: str, user_prompt: str):
         index: int = 0
-        self.input_ids = self.tokenizer.encode(self.main_prompt)
+        self.input_ids = self.tokenizer.encode(main_prompt)
         while True:
             if len(self.function_tokens) == 1:
                 last_token = self.function_tokens[0][len(self.next_tokens):]
@@ -47,7 +44,6 @@ class Generator():
 
             for match_token in self.function_tokens:
                 if match_token[:len(self.next_tokens)] == self.next_tokens:
-                    print("THis is match_token", match_token)
                     self.remaining_tokens.append(match_token)
             if not self.remaining_tokens:
                 raise RuntimeError("No function matches generated prefix...")
@@ -57,4 +53,8 @@ class Generator():
             index += 1
 
         result = self.tokenizer.decode(self.next_tokens)
-        print("This is result", result)
+        self.next_tokens.clear()
+        self.function_tokens.clear()
+        self.input_ids.clear()
+        print(f"This is prompt: {user_prompt}, this is result {result}")
+        return result
