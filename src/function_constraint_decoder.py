@@ -58,5 +58,4 @@ class Generator():
         self.next_tokens.clear()
         self.function_tokens.clear()
         self.input_ids.clear()
-        print(f"This is prompt: {user_prompt}, this is result {result}")
-        return result, selected_input_ids
+        return result
