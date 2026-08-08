@@ -15,7 +15,7 @@ class Generator():
         self.function_tokens: list[list[int]] = []
         self.remaining_tokens: list[list[int]] = []
 
-    def start_model(self, main_prompt: str, user_prompt: str):
+    def start_model(self, main_prompt: str):
         index: int = 0
         self.input_ids = self.tokenizer.encode(main_prompt)
         while True:
@@ -53,7 +53,6 @@ class Generator():
             index += 1
 
         result = self.tokenizer.decode(self.next_tokens)
-        selected_input_ids = self.input_ids.copy()
 
         self.next_tokens.clear()
         self.function_tokens.clear()
