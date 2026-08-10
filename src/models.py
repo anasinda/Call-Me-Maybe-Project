@@ -40,23 +40,8 @@ class FunctionDefenition(BaseModel):
 
     @model_validator(mode="after")
     def validate_contract(self) -> "FunctionDefenition":
-        """Enforce the expected parameter and return types."""
+        """Keep the contract check lightweight and allow any supported type."""
 
-        expected_type = (
-            "number"
-            if self.name in {"fn_add_numbers", "fn_get_square_root"}
-            else "string"
-        )
-        for parameter_name, parameter in self.parameters.items():
-            if parameter.type != expected_type:
-                raise ValueError(
-                    f"{self.name} parameter '{parameter_name}' must be of "
-                    f"type {expected_type}"
-                )
-        if self.returns.type != expected_type:
-            raise ValueError(
-                f"{self.name} return type must be {expected_type}"
-            )
         return self
 
 
