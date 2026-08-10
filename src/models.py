@@ -11,5 +11,6 @@ class FunctionDefenition(BaseModel):
     parameters: dict[str, Parameter]
     returns: Parameter
 
+
 class PromptGetter(BaseModel):
     prompt: str

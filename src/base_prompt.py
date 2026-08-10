@@ -1,4 +1,26 @@
-from models import FunctionDefenition
+from enum import Enum, auto
+
+from .models import FunctionDefenition
+
+
+class State(Enum):
+    """States used by the grammar helper."""
+
+    START = auto()
+    EXPECT_KEY = auto()
+    EXPECT_COLON = auto()
+    EXPECT_FUNCTION_NAME = auto()
+    EXPECT_KEY_COMMA = auto()
+    EXPECT_PARAMETERS_KEY = auto()
+    EXPECT_PARAMETERS_COLON = auto()
+    EXPECT_PARAMETERS_L_BRACE = auto()
+    EXPECT_PARAMETERS_NAME = auto()
+    EXPECT_PARAMETERS_NAME_COLON = auto()
+    EXPECT_PARAMETERS_VALUE = auto()
+    EXPECT_PARAMETERS_COMMA = auto()
+    EXPECT_PARAMETERS_R_BRACE = auto()
+    EXPECT_OBJECT_R_BRACE = auto()
+    END = auto()
 
 
 class CreatePrompt():
@@ -31,12 +53,8 @@ class CreatePrompt():
             "fn_substitute_string_with_regex": "Takes source_string = the original text, regex = the pattern to match, replacement = the text to substitute in.",
         }
 
-
-
-
-
-    def create_main_prompt(self):
-        func_prompt = f"""
+    def create_main_prompt(self) -> str:
+        func_prompt = """
 ==================================================
 FUNCTION SELECTION RULES
 ==================================================
@@ -268,10 +286,8 @@ Return ONLY the function name.
         func_prompt += "\nRequest:"
         return func_prompt
 
-
-    def create_parameters_prompt(self):
+    def create_parameters_prompt(self) -> str:
         param_func = "You extract ONLY function arguments from a user request.\n"
-
 
         param_func += "\nHARD RULES:\n"
         param_func += "\nDO NOT GIVE BACK A REVERSED PARAMETER FOR fn_reverse_string\n"
@@ -322,7 +338,6 @@ Return ONLY the function name.
         param_func += "\nLANGUAGE RULES:\n"
         param_func += "- 'half of X' → X / 2\n"
         param_func += "- Convert words to numbers: one=1, two=2, three=3\n"
-
 
         param_func += "\nSAMPLES:\n"
 

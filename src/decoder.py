@@ -1,11 +1,15 @@
 """Constrained decoding: generates a single parameter value (number or
 string) from the model, masking logits so the output is always valid."""
 
-import numpy as np
-
-from tokenizer import Tokenizer
+from .tokenizer import Tokenizer
 
 MAX_STEPS = 64  # safety cap so a stuck generation loop can't run forever
+
+
+def argmax_index(values: list[float]) -> int:
+    """Return the index of the largest value in ``values``."""
+
+    return max(range(len(values)), key=values.__getitem__)
 
 
 def build_number_token_mask(tokenizer: Tokenizer) -> list[int]:
@@ -22,9 +26,10 @@ def generate_number(tokenizer: Tokenizer, prompt_ids: list[int], number_mask: li
     value = ""
     for _ in range(MAX_STEPS):
         logits = tokenizer.get_logits(prompt_ids)
-        masked_logits = np.full(len(logits), -np.inf)
-        masked_logits[number_mask] = np.array(logits)[number_mask]
-        next_token = int(np.argmax(masked_logits))
+        masked_logits = [float("-inf")] * len(logits)
+        for index in number_mask:
+            masked_logits[index] = logits[index]
+        next_token = argmax_index(masked_logits)
         next_text = tokenizer.decode([next_token])
 
         if next_text in (",", "}"):
@@ -43,7 +48,7 @@ def generate_string(tokenizer: Tokenizer, prompt_ids: list[int]) -> str:
     value = ""
     for _ in range(MAX_STEPS):
         logits = tokenizer.get_logits(prompt_ids)
-        next_token = int(np.argmax(logits))
+        next_token = argmax_index(logits)
         next_text = tokenizer.decode([next_token])
 
         prompt_ids.append(next_token)

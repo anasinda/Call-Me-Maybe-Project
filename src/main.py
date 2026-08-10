@@ -1,21 +1,29 @@
-"""Runs the function-calling pipeline: pick a function for each test prompt,
-then extract its arguments, using constrained decoding at every step."""
+"""Runs the function-calling pipeline with constrained decoding."""
 
 import time
+from typing import Any
 
-from schema import Schema
-from function_constraint_decoder import Generator
-from base_prompt import CreatePrompt
-from models import FunctionDefenition
-from tokenizer import Tokenizer
-from decoder import build_number_token_mask, generate_parameter
-
-DEFINITIONS_PATH = "../data/input/functions_definition.json"
-TESTS_PATH = "../data/input/function_calling_tests.json"
+from .base_prompt import CreatePrompt
+from .decoder import build_number_token_mask, generate_parameter
+from .function_constraint_decoder import Generator
+from .models import FunctionDefenition
+from .parsing import (
+    DEFAULT_FUNCTIONS_DEFINITION,
+    DEFAULT_TEST_INPUT,
+    DEFAULT_OUTPUT,
+    load_function_definitions,
+    load_test_prompts,
+    parse_arguments,
+    resolve_path,
+    write_json,
+)
+from .tokenizer import Tokenizer
 
 
 def get_request_text(test_case: dict) -> str:
     """Pull the natural-language request out of one test-case dict."""
+    if "prompt" in test_case:
+        return str(test_case["prompt"])
     if "request" in test_case:
         return str(test_case["request"])
     return str(next(iter(test_case.values())))
@@ -39,7 +47,7 @@ def extract_parameters(
     function_name: str,
     function_obj: FunctionDefenition,
     number_mask: list[int],
-) -> dict[str, str]:
+) -> dict[str, Any]:
     """Generate every parameter for the chosen function, one at a time."""
     header = (
         f"{function_signature(function_name, function_obj)}"
@@ -49,18 +57,36 @@ def extract_parameters(
     prompt_ids = tokenizer.encode(parameter_prompt + header)
 
     params = list(function_obj.parameters.items())
-    result: dict[str, str] = {}
+    result: dict[str, Any] = {}
 
     for i, (key, value) in enumerate(params):
         prompt_ids.extend(tokenizer.encode(f'"{key}":'))  # no trailing space
 
         generated = generate_parameter(tokenizer, prompt_ids, value.type, number_mask)
-        result[key] = generated.strip()
+        result[key] = coerce_generated_value(generated, value.type)
 
         is_last = i == len(params) - 1
         prompt_ids.extend(tokenizer.encode(" }" if is_last else ", "))
 
     return result
+
+
+def coerce_generated_value(value: str, value_type: str) -> Any:
+    """Convert a generated string into the JSON type expected by the schema."""
+
+    cleaned_value = value.strip().strip('"')
+    if value_type == "number":
+        if cleaned_value == "":
+            raise ValueError("Generated an empty numeric value")
+        if any(char in cleaned_value for char in ".eE"):
+            return float(cleaned_value)
+        return int(cleaned_value)
+    if value_type == "boolean":
+        lowered_value = cleaned_value.lower()
+        if lowered_value not in {"true", "false"}:
+            raise ValueError(f"Invalid boolean value: {value}")
+        return lowered_value == "true"
+    return cleaned_value
 
 
 def process_request(
@@ -79,45 +105,63 @@ def process_request(
 
     if function_name not in usable_functions:
         print(f"  -> unknown function '{function_name}', skipping: {request_text}")
-        return {"function": None, "parameters": {}}
+        return {"prompt": request_text, "fn_name": "fn_no_match", "args": {}}
 
     function_obj = usable_functions[function_name]
     if not function_obj.parameters:
-        return {"function": function_name, "parameters": {}}
+        return {"prompt": request_text, "fn_name": function_name, "args": {}}
 
     parameters = extract_parameters(
         tokenizer, parameter_prompt, request_text, function_name, function_obj, number_mask
     )
     print(f"  -> parameters: {parameters}")
-    return {"function": function_name, "parameters": parameters}
+    return {"prompt": request_text, "fn_name": function_name, "args": parameters}
 
 
-def main() -> dict[str, dict]:
+def main(argv: list[str] | None = None) -> list[dict[str, Any]]:
     start_time = time.time()
 
-    schema = Schema(DEFINITIONS_PATH, TESTS_PATH)
-    usable_functions, test_cases = schema.create_schema()
+    args = parse_arguments(argv)
+    definitions_path = resolve_path(args.functions_definition, DEFAULT_FUNCTIONS_DEFINITION)
+    tests_path = resolve_path(args.input, DEFAULT_TEST_INPUT)
+    output_path = resolve_path(args.output, DEFAULT_OUTPUT)
+
+    try:
+        usable_functions = load_function_definitions(definitions_path)
+        test_cases = load_test_prompts(tests_path)
+    except Exception as error:
+        print(f"Error: {error}")
+        return []
 
     if not test_cases:
-        return {}
+        print("No test prompts were found.")
+        return []
 
     tokenizer = Tokenizer()
-    generator = Generator(tokenizer, usable_functions, test_cases)
+    generator = Generator(tokenizer, usable_functions, [])
     prompt_creator = CreatePrompt(usable_functions)
 
     function_prompt = prompt_creator.create_main_prompt()
     parameter_prompt = prompt_creator.create_parameters_prompt()
     number_mask = build_number_token_mask(tokenizer)
 
-    results: dict[str, dict] = {}
+    results: list[dict[str, Any]] = []
     for test_case in test_cases:
-        request_text = get_request_text(test_case)
-        results[request_text] = process_request(
-            test_case, tokenizer, generator, function_prompt, parameter_prompt, usable_functions, number_mask
+        results.append(
+            process_request(
+                test_case,
+                tokenizer,
+                generator,
+                function_prompt,
+                parameter_prompt,
+                usable_functions,
+                number_mask,
+            )
         )
 
     elapsed_min = (time.time() - start_time) / 60
     print(f"\n\nTotal time: {elapsed_min:.2f} min")
+    write_json(output_path, results)
     return results
 
 

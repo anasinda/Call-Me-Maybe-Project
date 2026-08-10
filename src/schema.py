@@ -1,21 +1,26 @@
 import json
+from pathlib import Path
 from typing import Any
-from models import FunctionDefenition, PromptGetter
 
-class Schema():
-    def __init__(self, file_path_definitions: str, file_path_test_prompts):
-        self.file_path_definitions = file_path_definitions
-        self.file_path_test_prompts = file_path_test_prompts
+from .models import FunctionDefenition
+
+
+class Schema:
+    def __init__(self, file_path_definitions: str | Path, file_path_test_prompts: str | Path):
+        self.file_path_definitions = Path(file_path_definitions)
+        self.file_path_test_prompts = Path(file_path_test_prompts)
         self.parsed_json_definitions: list[dict[str, Any]] = [{}]
         self.parsed_json_test_prompts: list[dict[str, Any]] = [{}]
         self.llm_usable_functions: dict[str, FunctionDefenition] = {}
         self.llm_given_prompts: dict[str, FunctionDefenition] = {}
 
-    def create_schema(self):
+    def create_schema(
+        self,
+    ) -> tuple[dict[str, FunctionDefenition], list[dict[str, Any]]]:
         try:
             with open(self.file_path_definitions, 'r') as file_func_def, open(self.file_path_test_prompts, "r") as file_prompt_test:
-                self.parsed_json_definitions: list[dict[str, Any]] = json.load(file_func_def)
-                self.parsed_json_test_prompts: list[dict[str, Any]] = json.load(file_prompt_test)
+                self.parsed_json_definitions = json.load(file_func_def)
+                self.parsed_json_test_prompts = json.load(file_prompt_test)
 
                 # print("Loaded json functions defs", self.parsed_json_definitions)
                 # print("Loaded json prompts tests", self.parsed_json_test_prompts)
