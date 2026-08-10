@@ -13,6 +13,3 @@ class FunctionDefenition(BaseModel):
 
 class PromptGetter(BaseModel):
     prompt: str
-
-
-
