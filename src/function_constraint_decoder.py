@@ -36,10 +36,6 @@ class Generator:
                 function_names: list[str] = list(self.usable_funcs.keys())
                 function_names.append("fn_no_match")
                 for function in function_names:
-                    print(
-                        "Looping threw functions --- now on: ",
-                        function,
-                    )
                     encoded_function = self.tokenizer.encode(function)
                     self.function_tokens.append(encoded_function)
 
@@ -69,8 +65,6 @@ class Generator:
             index += 1
 
         result = self.tokenizer.decode(self.next_tokens)
-        print("THis is function processed: ", result)
-
         self.next_tokens.clear()
         self.function_tokens.clear()
         self.input_ids.clear()

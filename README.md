@@ -46,7 +46,6 @@ make run
 make debug
 make clean
 make lint
-make lint-strict
 ```
 
 ## Algorithm Explanation

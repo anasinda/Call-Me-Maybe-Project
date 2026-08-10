@@ -94,7 +94,7 @@ def coerce_generated_value(value: str, value_type: str) -> Any:
             raise ValueError("Generated an empty numeric value")
         if any(char in cleaned_value for char in ".eE"):
             return float(cleaned_value)
-        return int(cleaned_value)
+        return float(cleaned_value)
     if value_type == "boolean":
         lowered_value = cleaned_value.lower()
         if lowered_value not in {"true", "false"}:
@@ -115,13 +115,8 @@ def process_request(
     """Run the full select-and-extract flow for one prompt."""
     request_text = get_request_text(test_case)
     function_name = select_function(generator, function_prompt, request_text)
-    print(f"Selected function: {function_name}")
 
     if function_name not in usable_functions:
-        print(
-            f"  -> unknown function '{function_name}', "
-            f"skipping: {request_text}"
-        )
         return {"prompt": request_text, "fn_name": "fn_no_match", "args": {}}
 
     function_obj = usable_functions[function_name]
@@ -136,11 +131,11 @@ def process_request(
         function_obj,
         number_mask,
     )
-    print(f"  -> parameters: {parameters}")
+
     return {
         "prompt": request_text,
-        "fn_name": function_name,
-        "args": parameters,
+        "name": function_name,
+        "parameters": parameters,
     }
 
 
@@ -189,7 +184,7 @@ def main(argv: list[str] | None = None) -> list[dict[str, Any]]:
                 number_mask,
             )
             results.append(result)
-            print(f"Processing prompt {index} of {total_prompts}")
+            print(f"Finished processing prompt {index} of {total_prompts} :)")
 
         elapsed_min = (time.time() - start_time) / 60
         print(f"\n\nTotal time: {elapsed_min:.2f} min")

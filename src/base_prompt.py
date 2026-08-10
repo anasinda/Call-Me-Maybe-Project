@@ -368,7 +368,7 @@ Return ONLY the function name.
         param_func += "- Escape backslashes correctly.\n"
         param_func += "- Use EXACT patterns, no variation allowed.\n"
 
-        param_func += "- For 'all numbers' → use EXACTLY \"\\\\d+\"\n"
+        param_func += "- For 'all numbers' → use EXACTLY \"\\d+\"\n"
         param_func += "- For 'all vowels' → use EXACTLY \"[aeiouAEIOU]\"\n"
 
         param_func += "- ONLY use the exact allowed regex.\n"
@@ -410,7 +410,7 @@ Return ONLY the function name.
         )
         param_func += (
             'Answer:\n{"source_string": "Room 12 has 4 chairs",'
-            ' "regex": "\\\\d+", "replacement": "NUM"}\n'
+            ' "regex": "\\d+", "replacement": "NUM"}\n'
         )
 
         param_func += (
