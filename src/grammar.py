@@ -58,7 +58,10 @@ class Grammar:
 
         if self.current_state == State.EXPECT_FUNCTION_NAME:
             allowed_funcs = Allowed(usable_funcs=set(self.functions))
-            allowed_funcs.usable_funcs = {f'"{function}"' for function in self.functions}
+            allowed_funcs.usable_funcs = {
+                f'"{function}"'
+                for function in self.functions
+            }
             return allowed_funcs
 
         if self.current_state == State.EXPECT_PARAMETERS_NAME:
@@ -70,7 +73,11 @@ class Grammar:
             assert self.current_function is not None
             assert self.current_parameter is not None
 
-            allowed_type = Allowed(value_type=self.functions[self.current_function].parameters[self.current_parameter.strip('"')].type)
+            allowed_type = Allowed(
+                value_type=self.functions[self.current_function].parameters[
+                    self.current_parameter.strip('"')
+                ].type
+            )
             return allowed_type
 
         raise RuntimeError(f"Unhandled state {self.current_state}")

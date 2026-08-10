@@ -7,13 +7,21 @@ import json
 from pathlib import Path
 from typing import Any, Sequence
 
-from .models import FunctionDefenition
+from pydantic import ValidationError
+
+from .models import FunctionDefenition, PromptGetter
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_FUNCTIONS_DEFINITION = PROJECT_ROOT / "data" / "input" / "functions_definition.json"
-DEFAULT_TEST_INPUT = PROJECT_ROOT / "data" / "input" / "function_calling_tests.json"
-DEFAULT_OUTPUT = PROJECT_ROOT / "data" / "output" / "function_calling_results.json"
+DEFAULT_FUNCTIONS_DEFINITION = (
+    PROJECT_ROOT / "data" / "input" / "functions_definition.json"
+)
+DEFAULT_TEST_INPUT = (
+    PROJECT_ROOT / "data" / "input" / "function_calling_tests.json"
+)
+DEFAULT_OUTPUT = (
+    PROJECT_ROOT / "data" / "output" / "function_calling_results.json"
+)
 
 
 class ParsingError(RuntimeError):
@@ -24,7 +32,11 @@ def build_parser() -> argparse.ArgumentParser:
     """Create the CLI parser used by ``python -m src``."""
 
     parser = argparse.ArgumentParser(prog="python -m src")
-    parser.add_argument("--functions_definition", type=Path, default=None)
+    parser.add_argument(
+        "--functions_definition",
+        type=Path,
+        default=None,
+    )
     parser.add_argument("--input", type=Path, default=None)
     parser.add_argument("--output", type=Path, default=None)
     return parser
@@ -49,6 +61,14 @@ def load_json_list(path: Path) -> list[dict[str, Any]]:
 
     try:
         with path.open("r", encoding="utf-8") as file_handle:
+            raw_text = file_handle.read()
+            if not raw_text.strip():
+                raise ParsingError(f"Empty input file: {path}")
+            if not any(char.isalpha() for char in raw_text):
+                raise ParsingError(
+                    f"Input file must contain text, not numbers only: {path}"
+                )
+            file_handle.seek(0)
             payload = json.load(file_handle)
     except FileNotFoundError as error:
         raise ParsingError(f"Missing input file: {path}") from error
@@ -61,7 +81,9 @@ def load_json_list(path: Path) -> list[dict[str, Any]]:
     parsed_items: list[dict[str, Any]] = []
     for item in payload:
         if not isinstance(item, dict):
-            raise ParsingError(f"Expected every item in {path} to be a JSON object")
+            raise ParsingError(
+                f"Expected every item in {path} to be a JSON object"
+            )
         parsed_items.append(item)
 
     return parsed_items
@@ -73,7 +95,12 @@ def load_function_definitions(path: Path) -> dict[str, FunctionDefenition]:
     parsed_items = load_json_list(path)
     functions: dict[str, FunctionDefenition] = {}
     for item in parsed_items:
-        function_def = FunctionDefenition.model_validate(item)
+        try:
+            function_def = FunctionDefenition.model_validate(item)
+        except ValidationError as error:
+            raise ParsingError(
+                f"Invalid function definition in {path}: {error}"
+            ) from error
         functions[function_def.name] = function_def
     return functions
 
@@ -81,7 +108,17 @@ def load_function_definitions(path: Path) -> dict[str, FunctionDefenition]:
 def load_test_prompts(path: Path) -> list[dict[str, Any]]:
     """Load prompt records used to drive the function-calling pipeline."""
 
-    return load_json_list(path)
+    parsed_items = load_json_list(path)
+    prompts: list[dict[str, Any]] = []
+    for item in parsed_items:
+        try:
+            prompt_record = PromptGetter.model_validate(item)
+        except ValidationError as error:
+            raise ParsingError(
+                f"Invalid prompt entry in {path}: {error}"
+            ) from error
+        prompts.append(prompt_record.model_dump())
+    return prompts
 
 
 def ensure_output_parent(path: Path) -> None:

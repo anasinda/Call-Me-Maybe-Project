@@ -31,17 +31,28 @@ class Generator:
             mask = [float("-inf")] * len(logits)
 
             if not self.function_tokens:
-                function_names: list[str] = list(self.usable_funcs.keys()) + ["fn_no_match"]
+                function_names: list[str] = list(self.usable_funcs.keys())
+                function_names.append("fn_no_match")
                 for function in function_names:
-                    print("Looping threw functions --- now on: ", function)
-                    self.function_tokens.append(self.tokenizer.encode(function))
+                    print(
+                        "Looping threw functions --- now on: ",
+                        function,
+                    )
+                    encoded_function = self.tokenizer.encode(function)
+                    self.function_tokens.append(encoded_function)
 
             for function_token in self.function_tokens:
                 if index < len(function_token):
                     mask[function_token[index]] = 0.0
 
-            masked_logits = [logit + mask_value for logit, mask_value in zip(logits, mask)]
-            best_token = max(range(len(masked_logits)), key=masked_logits.__getitem__)
+            masked_logits = [
+                logit + mask_value
+                for logit, mask_value in zip(logits, mask)
+            ]
+            best_token = max(
+                range(len(masked_logits)),
+                key=masked_logits.__getitem__,
+            )
             self.input_ids.append(best_token)
             self.next_tokens.append(best_token)
 

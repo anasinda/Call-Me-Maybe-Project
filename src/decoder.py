@@ -21,7 +21,11 @@ def build_number_token_mask(tokenizer: Tokenizer) -> list[int]:
     return list(allowed)
 
 
-def generate_number(tokenizer: Tokenizer, prompt_ids: list[int], number_mask: list[int]) -> str:
+def generate_number(
+    tokenizer: Tokenizer,
+    prompt_ids: list[int],
+    number_mask: list[int],
+) -> str:
     """Greedily generate a numeric value, masked to number characters only."""
     value = ""
     for _ in range(MAX_STEPS):
@@ -43,7 +47,10 @@ def generate_number(tokenizer: Tokenizer, prompt_ids: list[int], number_mask: li
     return value
 
 
-def generate_string(tokenizer: Tokenizer, prompt_ids: list[int]) -> str:
+def generate_string(
+    tokenizer: Tokenizer,
+    prompt_ids: list[int],
+) -> str:
     """Greedily generate a string value, stopping at the first ',' or '}'."""
     value = ""
     for _ in range(MAX_STEPS):
@@ -64,8 +71,13 @@ def generate_string(tokenizer: Tokenizer, prompt_ids: list[int]) -> str:
     return value
 
 
-def generate_parameter(tokenizer: Tokenizer, prompt_ids: list[int], param_type: str, number_mask: list[int]) -> str:
-    """Dispatch to the right generator based on the parameter's declared type."""
+def generate_parameter(
+    tokenizer: Tokenizer,
+    prompt_ids: list[int],
+    param_type: str,
+    number_mask: list[int],
+) -> str:
+    """Dispatch to the right generator based on the parameter type."""
     if param_type == "number":
         return generate_number(tokenizer, prompt_ids, number_mask)
     return generate_string(tokenizer, prompt_ids)

@@ -9,8 +9,9 @@ from .function_constraint_decoder import Generator
 from .models import FunctionDefenition
 from .parsing import (
     DEFAULT_FUNCTIONS_DEFINITION,
-    DEFAULT_TEST_INPUT,
     DEFAULT_OUTPUT,
+    DEFAULT_TEST_INPUT,
+    ParsingError,
     load_function_definitions,
     load_test_prompts,
     parse_arguments,
@@ -29,15 +30,26 @@ def get_request_text(test_case: dict) -> str:
     return str(next(iter(test_case.values())))
 
 
-def function_signature(name: str, function_obj: FunctionDefenition) -> str:
+def function_signature(
+    name: str,
+    function_obj: FunctionDefenition,
+) -> str:
     """e.g. 'Function: fn_add_numbers(a: number, b: number)\\n'"""
-    params = ", ".join(f"{k}: {v.type}" for k, v in function_obj.parameters.items())
+    params = ", ".join(
+        f"{k}: {v.type}" for k, v in function_obj.parameters.items()
+    )
     return f"Function: {name}({params})\n"
 
 
-def select_function(generator: Generator, function_prompt: str, request_text: str) -> str:
+def select_function(
+    generator: Generator,
+    function_prompt: str,
+    request_text: str,
+) -> str:
     """Ask the model which function (or 'null') fits this request."""
-    return generator.start_model(function_prompt + request_text)
+    return generator.start_model(
+        function_prompt + request_text,
+    )
 
 
 def extract_parameters(
@@ -62,7 +74,12 @@ def extract_parameters(
     for i, (key, value) in enumerate(params):
         prompt_ids.extend(tokenizer.encode(f'"{key}":'))  # no trailing space
 
-        generated = generate_parameter(tokenizer, prompt_ids, value.type, number_mask)
+        generated = generate_parameter(
+            tokenizer,
+            prompt_ids,
+            value.type,
+            number_mask,
+        )
         result[key] = coerce_generated_value(generated, value.type)
 
         is_last = i == len(params) - 1
@@ -104,7 +121,10 @@ def process_request(
     print(f"Selected function: {function_name}")
 
     if function_name not in usable_functions:
-        print(f"  -> unknown function '{function_name}', skipping: {request_text}")
+        print(
+            f"  -> unknown function '{function_name}', "
+            f"skipping: {request_text}"
+        )
         return {"prompt": request_text, "fn_name": "fn_no_match", "args": {}}
 
     function_obj = usable_functions[function_name]
@@ -112,24 +132,36 @@ def process_request(
         return {"prompt": request_text, "fn_name": function_name, "args": {}}
 
     parameters = extract_parameters(
-        tokenizer, parameter_prompt, request_text, function_name, function_obj, number_mask
+        tokenizer,
+        parameter_prompt,
+        request_text,
+        function_name,
+        function_obj,
+        number_mask,
     )
     print(f"  -> parameters: {parameters}")
-    return {"prompt": request_text, "fn_name": function_name, "args": parameters}
+    return {
+        "prompt": request_text,
+        "fn_name": function_name,
+        "args": parameters,
+    }
 
 
 def main(argv: list[str] | None = None) -> list[dict[str, Any]]:
     start_time = time.time()
 
     args = parse_arguments(argv)
-    definitions_path = resolve_path(args.functions_definition, DEFAULT_FUNCTIONS_DEFINITION)
+    definitions_path = resolve_path(
+        args.functions_definition,
+        DEFAULT_FUNCTIONS_DEFINITION,
+    )
     tests_path = resolve_path(args.input, DEFAULT_TEST_INPUT)
     output_path = resolve_path(args.output, DEFAULT_OUTPUT)
 
     try:
         usable_functions = load_function_definitions(definitions_path)
         test_cases = load_test_prompts(tests_path)
-    except Exception as error:
+    except ParsingError as error:
         print(f"Error: {error}")
         return []
 
@@ -146,18 +178,19 @@ def main(argv: list[str] | None = None) -> list[dict[str, Any]]:
     number_mask = build_number_token_mask(tokenizer)
 
     results: list[dict[str, Any]] = []
-    for test_case in test_cases:
-        results.append(
-            process_request(
-                test_case,
-                tokenizer,
-                generator,
-                function_prompt,
-                parameter_prompt,
-                usable_functions,
-                number_mask,
-            )
+    total_prompts = len(test_cases)
+    for index, test_case in enumerate(test_cases, start=1):
+        result = process_request(
+            test_case,
+            tokenizer,
+            generator,
+            function_prompt,
+            parameter_prompt,
+            usable_functions,
+            number_mask,
         )
+        results.append(result)
+        print(f"generated {index}/{total_prompts} number of prompts")
 
     elapsed_min = (time.time() - start_time) / 60
     print(f"\n\nTotal time: {elapsed_min:.2f} min")
