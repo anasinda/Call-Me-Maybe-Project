@@ -190,7 +190,7 @@ def main(argv: list[str] | None = None) -> list[dict[str, Any]]:
             number_mask,
         )
         results.append(result)
-        print(f"generated {index}/{total_prompts} number of prompts")
+        print(f"Processing prompt {index} of {total_prompts}")
 
     elapsed_min = (time.time() - start_time) / 60
     print(f"\n\nTotal time: {elapsed_min:.2f} min")
