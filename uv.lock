@@ -107,7 +107,7 @@ wheels = [
 [[package]]
 name = "call-me-maybe"
 version = "1.0.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "flake8" },
     { name = "llm-sdk" },

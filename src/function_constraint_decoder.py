@@ -1,3 +1,5 @@
+"""Simple model driver used to select a function from the prompt."""
+
 from .models import FunctionDefenition
 from .tokenizer import Tokenizer
 

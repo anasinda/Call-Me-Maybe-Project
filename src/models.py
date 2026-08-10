@@ -1,3 +1,5 @@
+"""Data models that define supported functions and parameters."""
+
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 

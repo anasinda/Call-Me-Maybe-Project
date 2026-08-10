@@ -1,3 +1,5 @@
+"""Compatibility helpers for loading schemas and prompt data."""
+
 from pathlib import Path
 
 from .models import FunctionDefenition

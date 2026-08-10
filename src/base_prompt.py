@@ -1,3 +1,5 @@
+"""Prompt-building helpers for the function-calling examples."""
+
 from enum import Enum, auto
 
 from .models import FunctionDefenition

@@ -1,3 +1,5 @@
+"""Wrapper around the local LLM tokenizer interface."""
+
 from typing import Any, cast
 
 from llm_sdk import Small_LLM_Model  # type: ignore[attr-defined]

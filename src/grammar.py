@@ -1,3 +1,5 @@
+"""Grammar utilities for validating and walking structured outputs."""
+
 from dataclasses import dataclass
 
 from .base_prompt import State
