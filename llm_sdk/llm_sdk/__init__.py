@@ -1,4 +1,4 @@
-# ABOUTME: LLM SDK for local model inference using Hugging Face transformers.
+# # ABOUTME: LLM SDK for local model inference using Hugging Face transformers.
 # ABOUTME: Provides Small_LLM_Model class for loading and running causal language models.
 
 import time

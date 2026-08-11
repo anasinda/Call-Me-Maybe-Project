@@ -1,20 +1,32 @@
 import json
 from typing import Any
-from src.models import FunctionDefenition, Parameter
-from src.grammar import Grammar, State
+from models import FunctionDefenition, PromptGetter
 
 class Schema():
-    def __init__(self, file_path: str):
-        self.file_path = file_path
-        self.parsed_json: list[dict[str, Any]] = [{}]
+    def __init__(self, file_path_definitions: str, file_path_test_prompts):
+        self.file_path_definitions = file_path_definitions
+        self.file_path_test_prompts = file_path_test_prompts
+        self.parsed_json_definitions: list[dict[str, Any]] = [{}]
+        self.parsed_json_test_prompts: list[dict[str, Any]] = [{}]
+        self.llm_usable_functions: dict[str, FunctionDefenition] = {}
+        self.llm_given_prompts: dict[str, FunctionDefenition] = {}
 
     def create_schema(self):
-        with open(self.file_path, 'r') as file:
-            llm_usable_functions: dict[str, FunctionDefenition] = {}
-            parsed_json: list[dict[str, Any]] = json.load(file)
+        try:
+            with open(self.file_path_definitions, 'r') as file_func_def, open(self.file_path_test_prompts, "r") as file_prompt_test:
+                self.parsed_json_definitions: list[dict[str, Any]] = json.load(file_func_def)
+                self.parsed_json_test_prompts: list[dict[str, Any]] = json.load(file_prompt_test)
 
-            for data in parsed_json:
-                func_obj: FunctionDefenition = FunctionDefenition.model_validate(data)
-                llm_usable_functions[func_obj.name] = func_obj
+                # print("Loaded json functions defs", self.parsed_json_definitions)
+                # print("Loaded json prompts tests", self.parsed_json_test_prompts)
+                for data in self.parsed_json_definitions:
+                    func_def_obj: FunctionDefenition = FunctionDefenition.model_validate(data)
+                    self.llm_usable_functions[func_def_obj.name] = func_def_obj
 
-            return llm_usable_functions
+                # for index, data in enumerate(self.parsed_json_test_prompts):
+                #     prompt_test_obj: PromptGetter = PromptGetter.model_validate(data)
+                #     self.llm_given_prompts[f"prompt-{index}"] = prompt_test_obj
+        except FileNotFoundError as no_file_error:
+            print(f"Couldn't open file: {no_file_error.filename}")
+
+        return self.llm_usable_functions, self.parsed_json_test_prompts
