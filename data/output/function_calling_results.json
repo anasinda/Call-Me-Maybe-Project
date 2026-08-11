@@ -1,0 +1,178 @@
+[
+  {
+    "prompt": "What is the product of 3 and 5?",
+    "name": "fn_multiply_numbers",
+    "parameters": {
+      "a": 3.0,
+      "b": 5.0
+    }
+  },
+  {
+    "prompt": "What is the product of 12 and 4?",
+    "name": "fn_multiply_numbers",
+    "parameters": {
+      "a": 12.0,
+      "b": 4.0
+    }
+  },
+  {
+    "prompt": "Multiply 25 by 16",
+    "name": "fn_multiply_numbers",
+    "parameters": {
+      "a": 25.0,
+      "b": 16.0
+    }
+  },
+  {
+    "prompt": "What is 7 times 13?",
+    "name": "fn_multiply_numbers",
+    "parameters": {
+      "a": 7.0,
+      "b": 13.0
+    }
+  },
+  {
+    "prompt": "Is 4 an even number?",
+    "name": "fn_is_even",
+    "parameters": {
+      "n": 4.0
+    }
+  },
+  {
+    "prompt": "Is 7 an even number?",
+    "name": "fn_is_even",
+    "parameters": {
+      "n": 7.0
+    }
+  },
+  {
+    "prompt": "Check if 128 is even",
+    "name": "fn_is_even",
+    "parameters": {
+      "n": 128.0
+    }
+  },
+  {
+    "prompt": "Is 35 an even number?",
+    "name": "fn_is_even",
+    "parameters": {
+      "n": 35.0
+    }
+  },
+  {
+    "prompt": "Calculate compound interest on 1234567.89 at 0.0375 rate for 23 years",
+    "name": "fn_execute_sql_query",
+    "parameters": {
+      "query": "Calculate compound interest on 1234567.89 at 0.0375 rate for 23 years",
+      "database": "testdb"
+    }
+  },
+  {
+    "prompt": "Calculate compound interest on 1000 at 0.05 rate for 10 years",
+    "name": "fn_execute_sql_query",
+    "parameters": {
+      "query": "Calculate compound interest on 1000 at 0.05 rate for 10 years",
+      "database": "example_db"
+    }
+  },
+  {
+    "prompt": "Calculate compound interest on 5000 at a 0.08 rate for 5 years",
+    "name": "fn_execute_sql_query",
+    "parameters": {
+      "query": "Calculate compound interest on 5000 at a 0.08 rate for 5 years",
+      "database": "example_db"
+    }
+  },
+  {
+    "prompt": "Execute SQL query 'SELECT * FROM users' on the production database",
+    "name": "fn_execute_sql_query",
+    "parameters": {
+      "query": "SELECT * FROM users",
+      "database": "production"
+    }
+  },
+  {
+    "prompt": "Run the query 'INSERT INTO logs VALUES (1, 2, 3)' on the system database",
+    "name": "fn_execute_sql_query",
+    "parameters": {
+      "query": "INSERT INTO logs VALUES (1",
+      "database": "system"
+    }
+  },
+  {
+    "prompt": "Execute 'SELECT name FROM customers' on the customers database",
+    "name": "fn_execute_sql_query",
+    "parameters": {
+      "query": "SELECT name FROM customers",
+      "database": "customers"
+    }
+  },
+  {
+    "prompt": "Run 'DELETE FROM sessions WHERE expired = true' on the production database",
+    "name": "fn_execute_sql_query",
+    "parameters": {
+      "query": "DELETE FROM sessions WHERE expired = true",
+      "database": "production"
+    }
+  },
+  {
+    "prompt": "Read the file at /home/user/data.json with utf-8 encoding",
+    "name": "fn_read_file",
+    "parameters": {
+      "path": "/home/user/data.json",
+      "encoding": "utf-8"
+    }
+  },
+  {
+    "prompt": "Read C:\\Users\\john\\config.ini with latin-1 encoding",
+    "name": "fn_read_file",
+    "parameters": {
+      "path": "C:\\\\Users\\\\john\\\\config.ini",
+      "encoding": "latin-1"
+    }
+  },
+  {
+    "prompt": "Read /var/log/application.log using utf-8 encoding",
+    "name": "fn_read_file",
+    "parameters": {
+      "path": "/var/log/application.log",
+      "encoding": "utf-8"
+    }
+  },
+  {
+    "prompt": "Read the file /tmp/test.txt with ascii encoding",
+    "name": "fn_read_file",
+    "parameters": {
+      "path": "/tmp/test.txt",
+      "encoding": "ascii"
+    }
+  },
+  {
+    "prompt": "Format template: Hello {user}'s profile!",
+    "name": "fn_format_template",
+    "parameters": {
+      "template": "Hello {user"
+    }
+  },
+  {
+    "prompt": "Format template: Say \"hello\" to {name}",
+    "name": "fn_format_template",
+    "parameters": {
+      "template": "Say \\\"hello\\\" to {name"
+    }
+  },
+  {
+    "prompt": "Format this template: Welcome, {username}!",
+    "name": "fn_format_template",
+    "parameters": {
+      "template": "Welcome"
+    }
+  },
+  {
+    "prompt": "Format template: {name} has {count} messages",
+    "name": "fn_format_template",
+    "parameters": {
+      "template": "name has count messages"
+    }
+  }
+]

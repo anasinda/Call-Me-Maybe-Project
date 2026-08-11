@@ -1,0 +1,2 @@
+[flake8]
+exclude = .git,.venv,__pycache__,build,dist,data/output,llm_sdk/llm_sdk/__pycache__

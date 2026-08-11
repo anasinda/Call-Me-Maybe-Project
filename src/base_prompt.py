@@ -1,42 +1,98 @@
-from models import FunctionDefenition
+"""Prompt-building helpers for the function-calling examples."""
+
+from enum import Enum, auto
+
+from .models import FunctionDefenition
+
+
+class State(Enum):
+    """States used by the grammar helper."""
+
+    START = auto()
+    EXPECT_KEY = auto()
+    EXPECT_COLON = auto()
+    EXPECT_FUNCTION_NAME = auto()
+    EXPECT_KEY_COMMA = auto()
+    EXPECT_PARAMETERS_KEY = auto()
+    EXPECT_PARAMETERS_COLON = auto()
+    EXPECT_PARAMETERS_L_BRACE = auto()
+    EXPECT_PARAMETERS_NAME = auto()
+    EXPECT_PARAMETERS_NAME_COLON = auto()
+    EXPECT_PARAMETERS_VALUE = auto()
+    EXPECT_PARAMETERS_COMMA = auto()
+    EXPECT_PARAMETERS_R_BRACE = auto()
+    EXPECT_OBJECT_R_BRACE = auto()
+    END = auto()
 
 
 class CreatePrompt():
     def __init__(self, use_given_functions: dict[str, FunctionDefenition]):
         self.use_given_functions = use_given_functions
         self.function_examples: dict[str, str] = {
-            "fn_no_match": "Anything that the other functions can't handle: null.",
+            "fn_no_match": (
+                "Anything that the other functions can't handle: null."
+            ),
             "fn_add_numbers": "I need to add two numbers: 43 and 81.",
             "fn_greet": "Can you greet Mike?",
             "fn_reverse_string": "Can you reverse 'byebye'?",
             "fn_get_square_root": "What's the square root of 81?",
-            "fn_substitute_string_with_regex": "Substitute the word 'up' with 'down' in 'I went up and down then left then right'"
+            "fn_substitute_string_with_regex": (
+                "Substitute the word 'up' with 'down' in 'I went up and "
+                "down then left then right'"
+            ),
         }
 
         self.functions_example_select: dict[str, str] = {
-            "fn_no_match": "Only used when you can not find another function to use for the user prompt",
-            "fn_add_numbers": "Only use this for arithmetic addition of two numbers — not for text replacement or substitution.",
-            "fn_greet": "Only use this for producing a greeting for a named person — not for math or text editing.",
-            "fn_reverse_string": "Only use this to flip the entire order of a string end-to-end — not for replacing or substituting parts of it.",
-            "fn_get_square_root": "Only use this for computing a square root of a single number — not for addition or any text operation.",
-            "fn_substitute_string_with_regex": "Use this whenever the request involves replacing, substituting, or swapping words, characters, or patterns within text — not for arithmetic.",
+            "fn_no_match": (
+                "Only used when you can not find another function to use for "
+                "the user prompt"
+            ),
+            "fn_add_numbers": (
+                "Only use this for arithmetic addition of two numbers — not "
+                "for text replacement or substitution."
+            ),
+            "fn_greet": (
+                "Only use this for producing a greeting for a named person — "
+                "not for math or text editing."
+            ),
+            "fn_reverse_string": (
+                "Only use this to flip the entire order of a string "
+                "end-to-end — not for replacing or substituting parts of it."
+            ),
+            "fn_get_square_root": (
+                "Only use this for computing a square root of a single number "
+                "— not for addition or any text operation."
+            ),
+            "fn_substitute_string_with_regex": (
+                "Use this whenever the request involves replacing, "
+                "substituting, or swapping words, characters, or patterns "
+                "within text — not for arithmetic."
+            ),
         }
 
         self.function_parameter_getter: dict[str, str] = {
             "fn_no_match": "Takes value = no_match.",
-            "fn_add_numbers": "Takes a = the first number, b = the second number.",
-            "fn_greet": "Takes name = the person's name only, with no action word attached.",
-            "fn_reverse_string": "Takes s = the exact string to reverse, unreversed.",
-            "fn_get_square_root": "Takes a = the number as-is, never the computed result.",
-            "fn_substitute_string_with_regex": "Takes source_string = the original text, regex = the pattern to match, replacement = the text to substitute in.",
+            "fn_add_numbers": (
+                "Takes a = the first number, b = the second number."
+            ),
+            "fn_greet": (
+                "Takes name = the person's name only, with no action word "
+                "attached."
+            ),
+            "fn_reverse_string": (
+                "Takes s = the exact string to reverse, unreversed."
+            ),
+            "fn_get_square_root": (
+                "Takes a = the number as-is, never the computed result."
+            ),
+            "fn_substitute_string_with_regex": (
+                "Takes source_string = the original text, regex = the pattern "
+                "to match, replacement = the text to substitute in."
+            ),
         }
 
-
-
-
-
-    def create_main_prompt(self):
-        func_prompt = f"""
+    def create_main_prompt(self) -> str:
+        func_prompt = """
 ==================================================
 FUNCTION SELECTION RULES
 ==================================================
@@ -262,48 +318,46 @@ Return ONLY the function name.
         func_prompt += "\nAVAILABLE FUNCTIONS:\n"
         for func, func_obj in self.use_given_functions.items():
             func_prompt += f"\nFunction name:\n{func}\n"
-            func_prompt += f"\nDescription for {func}:\n{func_obj.description}\n"
-            # func_prompt += f"\n Use case: {self.functions_example_select[func]}"
+            func_prompt += (
+                f"\nDescription for {func}:\n"
+                f"{func_obj.description}\n"
+            )
 
         func_prompt += "\nRequest:"
         return func_prompt
 
-
-    def create_parameters_prompt(self):
-        param_func = "You extract ONLY function arguments from a user request.\n"
-
+    def create_parameters_prompt(self) -> str:
+        param_func = (
+            "You extract ONLY function arguments from a user request.\n"
+        )
 
         param_func += "\nHARD RULES:\n"
-        param_func += "\nDO NOT GIVE BACK A REVERSED PARAMETER FOR fn_reverse_string\n"
+        param_func += (
+            "\nDO NOT GIVE BACK A REVERSED PARAMETER FOR "
+            "fn_reverse_string\n"
+        )
         param_func += "- Return ONLY a valid JSON object.\n"
         param_func += "- Do NOT explain anything.\n"
         param_func += "- Do NOT run the function.\n"
         param_func += "- Do NOT infer outputs, only extract inputs.\n"
         param_func += "- Do NOT try to reverse the parameter.\n"
-        param_func += "- You MUST take the parameter as is in the same sequence. THIS IS VERY IMPORTANT.\n"
+        param_func += (
+            "- You MUST take the parameter as is in the same sequence. "
+            "THIS IS VERY IMPORTANT.\n"
+        )
 
         param_func += "\nCRITICAL — NEVER RUN THE FUNCTION:\n"
         param_func += "- Extract ONLY what the user gave as raw input.\n"
-        param_func += "- NEVER compute, reverse, sort, add, transform, square,"
-        param_func += " or process the value.\n"
-        # param_func += "- The function will be called separately — your job is"
-        # param_func += " ONLY to extract.\n"
-        # param_func += "- 'square root of X' -> extract X as-is,"
-        # param_func += " do NOT compute √X\n"
-        # param_func += "- 'cube of X' -> extract X as-is,"
-        # param_func += " do NOT compute X^3\n"
-        # param_func += "- 'plus signs' or 'a plus sign' -> use EXACTLY \"+\""
-        # param_func += " (the character, not the word)\n"
-        # param_func += "- 'reverse string X' -> extract X as-is,"
-        # param_func += " do NOT compute the reversal\n"
-
+        param_func += (
+            "- NEVER compute, reverse, sort, add, transform, square, "
+            "or process the value.\n"
+        )
         param_func += "\nCRITICAL — NEVER INCLUDE THE VERB OR ACTION WORD:\n"
-        param_func += "- Extract ONLY the argument itself, never the command"
-        param_func += " word that triggered it.\n"
+        param_func += (
+            "- Extract ONLY the argument itself, never the command word "
+            "that triggered it.\n"
+        )
         param_func += "- 'greet' / 'say hello to' / 'welcome' are ACTIONS,"
-        # param_func += " not part of the name — never include them.\n"
-        # param_func += "- 'Greet Shrek' -> the name is 'Shrek', NOT"
-        # param_func += " 'greet' or 'greet Shrek'\n"
 
         param_func += "\nTYPE RULES:\n"
         param_func += "- Numbers or integers must be numeric (no quotes).\n"
@@ -314,7 +368,7 @@ Return ONLY the function name.
         param_func += "- Escape backslashes correctly.\n"
         param_func += "- Use EXACT patterns, no variation allowed.\n"
 
-        param_func += "- For 'all numbers' → use EXACTLY \"\\\\d+\"\n"
+        param_func += "- For 'all numbers' → use EXACTLY \"\\d+\"\n"
         param_func += "- For 'all vowels' → use EXACTLY \"[aeiouAEIOU]\"\n"
 
         param_func += "- ONLY use the exact allowed regex.\n"
@@ -322,7 +376,6 @@ Return ONLY the function name.
         param_func += "\nLANGUAGE RULES:\n"
         param_func += "- 'half of X' → X / 2\n"
         param_func += "- Convert words to numbers: one=1, two=2, three=3\n"
-
 
         param_func += "\nSAMPLES:\n"
 
@@ -347,19 +400,31 @@ Return ONLY the function name.
         param_func += 'Answer:\n{"name": "Fiona"}\n'
 
         param_func += "EXAMPLES OF HOW TO ANSWER FOR REGEX FUNCTION:\n"
-        param_func += "Function: fn_substitute_string_with_regex(source_string:"
-        param_func += " string, regex: string, replacement: string)\n"
-        param_func += 'Request: '
-        param_func += 'Replace all numbers in "Room 12 has 4 chairs" with NUM\n'
-        param_func += 'Answer:\n{"source_string": "Room 12 has 4 chairs",'
-        param_func += ' "regex": "\\\\d+", "replacement": "NUM"}\n'
+        param_func += (
+            "Function: fn_substitute_string_with_regex(source_string: "
+            "string, regex: string, replacement: string)\n"
+        )
+        param_func += "Request: "
+        param_func += (
+            'Replace all numbers in "Room 12 has 4 chairs" with NUM\n'
+        )
+        param_func += (
+            'Answer:\n{"source_string": "Room 12 has 4 chairs",'
+            ' "regex": "\\d+", "replacement": "NUM"}\n'
+        )
 
-        param_func += "Function: fn_substitute_string_with_regex(source_string: "
-        param_func += "string, regex: string, replacement: string)\n"
-        param_func += 'Request: '
-        param_func += 'Replace all vowels in "Learning to code" with "#"\n'
-        param_func += 'Answer:\n{"source_string": "Learning to code",'
-        param_func += ' "regex": "[aeiouAEIOU]", "replacement": "#"}\n'
+        param_func += (
+            "Function: fn_substitute_string_with_regex(source_string: "
+            "string, regex: string, replacement: string)\n"
+        )
+        param_func += "Request: "
+        param_func += (
+            'Replace all vowels in "Learning to code" with "#"\n'
+        )
+        param_func += (
+            'Answer:\n{"source_string": "Learning to code",'
+            ' "regex": "[aeiouAEIOU]", "replacement": "#"}\n'
+        )
 
         param_func += "\nNow extract arguments for this request.\n"
 

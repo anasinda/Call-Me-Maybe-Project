@@ -1,15 +1,19 @@
+"""Grammar utilities for validating and walking structured outputs."""
+
 from dataclasses import dataclass
-from src.models import FunctionDefenition
-from src.base_prompt import State
+
+from .base_prompt import State
+from .models import FunctionDefenition
+
 
 @dataclass
-class Allowed():
+class Allowed:
     literal: str | None = None
     choices: list[str] | None = None
     usable_funcs: set[str] | None = None
     value_type: str | None = None
 
-    def check_value_type(self):
+    def check_value_type(self) -> list[str]:
         if self.literal is not None:
             return [self.literal]
 
@@ -23,7 +27,6 @@ class Allowed():
             return list(self.usable_funcs)
 
         raise RuntimeError("Allowed is empty...")
-
 
 
 class Grammar:
@@ -57,12 +60,13 @@ class Grammar:
 
         if self.current_state == State.EXPECT_FUNCTION_NAME:
             allowed_funcs = Allowed(usable_funcs=set(self.functions))
-            allowed_funcs.usable_funcs = {f'"{function}"' for function in self.functions}
+            allowed_funcs.usable_funcs = {
+                f'"{function}"'
+                for function in self.functions
+            }
             return allowed_funcs
 
         if self.current_state == State.EXPECT_PARAMETERS_NAME:
-            remaining_choices: list[str] = []
-
             for param in self.available_params:
                 if param not in self.generated_params:
                     return Allowed(choices=[f'"{param}"'])
@@ -71,12 +75,16 @@ class Grammar:
             assert self.current_function is not None
             assert self.current_parameter is not None
 
-            allowed_type = Allowed(value_type=self.functions[self.current_function].parameters[self.current_parameter.strip('"')].type)
+            allowed_type = Allowed(
+                value_type=self.functions[self.current_function].parameters[
+                    self.current_parameter.strip('"')
+                ].type
+            )
             return allowed_type
 
         raise RuntimeError(f"Unhandled state {self.current_state}")
 
-    def consume(self, token: str):
+    def consume(self, token: str) -> None:
         allowed = self.get_allowed_tokens()
 
         if allowed.literal is not None:
@@ -139,7 +147,7 @@ class Grammar:
 
         self.current_state = transitions[self.current_state]
 
-    def reset(self):
+    def reset(self) -> None:
         self.current_state = State.START
         self.current_function = None
         self.current_parameter = None

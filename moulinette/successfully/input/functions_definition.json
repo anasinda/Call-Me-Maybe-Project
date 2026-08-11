@@ -16,10 +16,10 @@
   },
   {
     "name": "fn_is_even",
-    "description": "Check whether a number is even.",
+    "description": "Check if an integer is even, returns True if even, False if odd.",
     "parameters": {
       "n": {
-        "type": "number"
+        "type": "integer"
       }
     },
     "returns": {
@@ -28,7 +28,7 @@
   },
   {
     "name": "fn_calculate_compound_interest",
-    "description": "Calculate compound interest using a principal amount, interest rate, and number of years.",
+    "description": "Calculate compound interest: principal * (1 + rate)^years.",
     "parameters": {
       "principal": {
         "type": "number"
@@ -37,7 +37,7 @@
         "type": "number"
       },
       "years": {
-        "type": "number"
+        "type": "integer"
       }
     },
     "returns": {
@@ -61,7 +61,7 @@
   },
   {
     "name": "fn_read_file",
-    "description": "Read the contents of a file using a specified encoding.",
+    "description": "Read a file from the given path with specified encoding.",
     "parameters": {
       "path": {
         "type": "string"
@@ -76,7 +76,7 @@
   },
   {
     "name": "fn_format_template",
-    "description": "Format a template string and return the formatted result.",
+    "description": "Format a template string containing placeholders.",
     "parameters": {
       "template": {
         "type": "string"
